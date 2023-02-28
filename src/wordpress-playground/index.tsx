@@ -54,11 +54,14 @@ let workerThread;
 let isBooted = false;
 
 async function main() {
+	const isLocalTheme = query.get('local') || null;
+
 	const preinstallPlugins = query.getAll('plugin').map(toZipName);
 	// Don't preinstall the default theme
 	const queryTheme =
 		query.get('theme') === 'twentytwentythree' ? null : query.get('theme');
-	const preinstallTheme = toZipName(queryTheme);
+	const preinstallTheme = isLocalTheme ? queryTheme : toZipName(queryTheme);
+
 	wpVersion = query.get('wp') ? query.get('wp') : '6.1';
 	phpVersion = query.get('php') ? query.get('php') : '8.0';
 	const installPluginProgress = Math.min(preinstallPlugins.length * 15, 45);
@@ -69,7 +72,7 @@ async function main() {
 	workerThread = await bootWordPress({
 		onWasmDownloadProgress: progress.partialObserver(
 			bootProgress,
-			'Preparing WordPress...'
+			'Preparing Your Preview...'
 		),
 		phpVersion,
 		dataModule: wpVersion,
@@ -91,10 +94,10 @@ async function main() {
 	if (preinstallTheme) {
 		// Download the theme file
 		const response = cloneResponseMonitorProgress(
-			await fetch('/plugin-proxy?theme=' + preinstallTheme),
+			await fetch(preinstallTheme),
 			progress.partialObserver(
 				installThemeProgress - 10,
-				`Installing ${zipNameToHumanName(preinstallTheme)} theme...`
+				`Installing theme...`
 			)
 		);
 		progress.slowlyIncrementBy(10);
@@ -102,9 +105,8 @@ async function main() {
 		if (response.status === 200) {
 			const themeFile = new File(
 				[await response.blob()],
-				preinstallTheme
+				isLocalTheme ? 'yotako-theme.zip' : preinstallTheme
 			);
-
 			try {
 				await installTheme(workerThread, themeFile);
 			} catch (error) {

